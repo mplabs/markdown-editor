@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Markdown Editor</title>
+
+  <script src="/bower_components/marked/marked.min.js"></script>
+  <script src="/bower_components/highlightjs/highlight.pack.min.js"></script>
+
+  <link rel="stylesheet" href="/bower_components/source-code-pro/source-code-pro.css">
+  <link rel="stylesheet" href="/bower_components/source-sans-pro/source-sans-pro.css">
+  <link rel="stylesheet" href="/bower_components/highlightjs/styles/androidstudio.css">
+  <style>
+    *,
+    *:before,
+    *:after {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Source Sans Pro", arial;
+      font-size: 12pt;
+      font-weight: 500;
+      line-height: 1.25rem;
+      overflow: hidden;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin-top:0;
+      margin-bottom:0;
+    }
+    h1 {
+      font-size:1.5rem;
+      padding:1.45833em 0;
+    }
+
+    h2 {
+      font-size:1.33333em;
+      padding:1.25rem 0;
+    }
+
+    h3 {
+      font-size:1.16667em;
+      padding:1.51786em 0;
+      font-weight: 500;
+    }
+
+    p {
+      padding-left: .5rem;
+    }
+
+    body,
+    .row {
+      margin: 0;
+      height: 100vh;
+    }
+    .row {
+      display: -webkit-flex;
+      display: -moz-flex;
+      display: -ms-flex;
+      display: -o-flex;
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+    }
+
+      .row > * {
+        flex: 1;
+      }
+
+    textarea {
+      width: 100%;
+      height: 100%;
+      tab-size: 2;
+    }
+
+    #preview {
+      height: 100%;
+      padding: 0 15px;
+      overflow-y: auto;
+    }
+
+    pre > code {
+      width: 100%;
+      padding-left: .5rem;
+    }
+
+    code {
+      display: inline-block;
+      font-family: "Source Code Pro", monospace;
+      font-size: 9pt;
+      line-height: 1.25rem;
+      vertical-align: baseline;
+      padding: 2px 5px;
+      border: 1px solid #eee;
+      border-radius: 3px;
+      background: #fffffc;
+    }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <div class="col-lg">
+      <textarea name="" id="input"></textarea>
+    </div>
+    <div class="col-lg">
+      <div id="preview"></div>
+    </div>
+  </div>
+  <script>
+  (function() {
+    "use strict";
+
+    var input = document.querySelector('#input');
+    var preview = document.querySelector('#preview');
+    var storage = new LS('mkdown');
+
+    new Editor(input, preview);
+
+    input.addEventListener('input', function() {
+      debounce(() => this.editor.update(), 250);
+      debounce(function() {
+        storage.set('value', input.value);
+      }, 500);
+    });
+    
+    input.addEventListener('keydown', function(event) {
+      if (event.code === "Tab") {
+        event.preventDefault();
+
+        var cursorPos = {
+          start: input.selectionStart,
+          end: input.selectionEnd
+        };
+
+        input.value = input.value.substring(0, cursorPos.start) + "\t" +
+          input.value.substring(cursorPos.end);
+        input.selectionStart = input.selectionEnd = cursorPos.start + 1;
+      }
+    });
+
+    input.addEventListener('wheel', handleScroll);
+    preview.addEventListener('wheel', handleScroll);
+
+    var ticking = false;
+    function handleScroll(event) {
+      var source;
+      var target;
+      if (event.target === input) {
+        source = input;
+        target = preview;
+      } else {
+        source = preview;
+        target = input;
+      }
+
+      if (!ticking) {
+        requestAnimationFrame(function() {
+          target.scrollTop = source.scrollTop;
+          ticking = false;    
+        });
+      }
+      ticking = true;      
+    }
+
+    function Editor(input, preview) {
+      
+      marked.setOptions({
+        highlight: function (code) {
+          return hljs.highlightAuto(code).value;
+        }
+      });
+
+      this.init = function() {
+        var initialValue = storage.get('value');
+        input.value = (initialValue) ? initialValue : '';
+        this.update();
+      }
+
+      this.update = function() {
+        preview.innerHTML = marked(input.value);
+      }
+      input.editor = this;
+      this.init();
+    }
+
+    function LS(namespace) {
+      
+      namespace = namespace || "";
+      namespace += "_";
+
+      var storage = window['localStorage'];
+
+      this.set = function(key, value) {
+        return storage.setItem(namespace + key, value);
+      }
+
+      this.get = function(key) {
+        return storage.getItem(namespace + key);
+      }
+
+      this.delete = function(key) {
+        return storage.removeItem(namespace + key);
+      }
+
+      this.clear = function() {
+        return storage.clear();
+      }
+    }
+
+    // Returns a function, that, as long as it continues to be invoked, will not
+    // be triggered. The function will be called after it stops being called for
+    // N milliseconds. If `immediate` is passed, trigger the function on the
+    // leading edge, instead of the trailing.
+    function debounce(func, wait, immediate) {
+      var timeout;
+      return function() {
+        var context = this, args = arguments;
+        var later = function() {
+          timeout = null;
+          if (!immediate) func.apply(context, args);
+        };
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+      };
+    };
+    
+  })();
+  </script>
+</body>
+</html>

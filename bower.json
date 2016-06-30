@@ -1,0 +1,29 @@
+{
+  "name": "mkdown-editor",
+  "description": "A very simple editor for markdown documents.",
+  "main": "index.html",
+  "keywords": [
+    "markdown",
+    "editor",
+    "text"
+  ],
+  "authors": [
+    "Felix Dürrwald <mplabs@mplabs.de>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "source-code-pro": "git://github.com/adobe-fonts/source-code-pro.git#release",
+    "source-sans-pro": "git://github.com/adobe-fonts/source-sans-pro.git#release",
+    "marked": "^0.3.5",
+    "highlightjs": "^9.4.0"
+  }
+}
